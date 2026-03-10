@@ -6,7 +6,7 @@ export const saveSubscription = async (req, res) => {
     const { browserId, subscription } = req.body;
 
     // ⭐ 15 second session
-    const expiresAt = new Date(Date.now() + 15 * 1000);
+const expiresAt = new Date(Date.now() + 15000); // 15 seconds
 
     let existing = await Subscription.findOne({ browserId });
 
