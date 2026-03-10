@@ -4,20 +4,28 @@ import webpush from "../config/webpush.js";
 import { v4 as uuidv4 } from "uuid";
 
 export const sendNotification = async (req, res) => {
-
   try {
-
+    await Subscription.deleteMany({
+      expiresAt: { $lt: new Date() },
+    });
     const { browserIds, title, message, url } = req.body;
 
     const notificationId = uuidv4();
 
     const users = await Subscription.find({
-      browserId: { $in: browserIds }
+      browserId: { $in: browserIds },
+      expiresAt: { $gt: new Date() },
     });
 
     if (!users.length) {
       return res.status(404).json({
-        message: "No browsers found"
+        message: "No active subscriptions",
+      });
+    }
+
+    if (!users.length) {
+      return res.status(404).json({
+        message: "No browsers found",
       });
     }
 
@@ -25,11 +33,11 @@ export const sendNotification = async (req, res) => {
       notificationId,
       title,
       body: message,
-      url
+      url,
     });
 
-    const promises = users.map(user =>
-      webpush.sendNotification(user.subscription, payload)
+    const promises = users.map((user) =>
+      webpush.sendNotification(user.subscription, payload),
     );
 
     await Promise.all(promises);
@@ -38,22 +46,18 @@ export const sendNotification = async (req, res) => {
       notificationId,
       title,
       message,
-      browserIds
+      browserIds,
     });
 
     res.json({
       success: true,
-      sent: users.length
+      sent: users.length,
     });
-
   } catch (error) {
-
     console.error(error);
 
     res.status(500).json({
-      error: error.message
+      error: error.message,
     });
-
   }
-
 };
