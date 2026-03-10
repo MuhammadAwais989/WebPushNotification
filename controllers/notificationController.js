@@ -4,38 +4,31 @@ import webpush from "../config/webpush.js";
 import { v4 as uuidv4 } from "uuid";
 
 export const sendNotification = async (req, res) => {
-await Subscription.deleteMany({
-  expiresAt: { $lt: new Date() }
-});
   try {
+    // expired subscriptions delete
+    await Subscription.deleteMany({
+      expiresAt: { $lt: new Date() }
+    });
 
     const { browserIds, title, message, url } = req.body;
 
     const notificationId = uuidv4();
 
+    // only active sessions
     const users = await Subscription.find({
-  browserId: { $in: browserIds },
-  expiresAt: { $gt: new Date() }   // ⭐ only active sessions
-});
-
-    if (!users.length) {
-      return res.status(404).json({
-        message: "No browsers found"
-      });
-    }
-
-    const payload = JSON.stringify({
-      notificationId,
-      title,
-      body: message,
-      url
+      browserId: { $in: browserIds },
+      expiresAt: { $gt: new Date() }  // only active
     });
 
-    const promises = users.map(user =>
-      webpush.sendNotification(user.subscription, payload)
-    );
+    if (!users.length) {
+      return res.status(404).json({ message: "No active browsers" });
+    }
 
-    await Promise.all(promises);
+    const payload = JSON.stringify({ notificationId, title, body: message, url });
+
+    await Promise.all(users.map(user =>
+      webpush.sendNotification(user.subscription, payload)
+    ));
 
     await Notification.create({
       notificationId,
@@ -44,19 +37,9 @@ await Subscription.deleteMany({
       browserIds
     });
 
-    res.json({
-      success: true,
-      sent: users.length
-    });
+    res.json({ success: true, sent: users.length });
 
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      error: error.message
-    });
-
+    res.status(500).json({ error: error.message });
   }
-
 };
