@@ -5,21 +5,32 @@ export const saveSubscription = async (req, res) => {
 
     const { browserId, subscription } = req.body;
 
+    // ⭐ 15 second session
+    const expiresAt = new Date(Date.now() + 15 * 1000);
+
     let existing = await Subscription.findOne({ browserId });
 
     if (existing) {
+
       existing.subscription = subscription;
+      existing.expiresAt = expiresAt;   // ⭐ ADD
       await existing.save();
+
     } else {
+
       await Subscription.create({
         browserId,
-        subscription
+        subscription,
+        expiresAt  // ⭐ ADD
       });
+
     }
 
     res.json({ success: true });
 
   } catch (error) {
+
     res.status(500).json({ error: error.message });
+
   }
 };

@@ -4,7 +4,9 @@ import webpush from "../config/webpush.js";
 import { v4 as uuidv4 } from "uuid";
 
 export const sendNotification = async (req, res) => {
-
+await Subscription.deleteMany({
+  expiresAt: { $lt: new Date() }
+});
   try {
 
     const { browserIds, title, message, url } = req.body;
@@ -12,8 +14,9 @@ export const sendNotification = async (req, res) => {
     const notificationId = uuidv4();
 
     const users = await Subscription.find({
-      browserId: { $in: browserIds }
-    });
+  browserId: { $in: browserIds },
+  expiresAt: { $gt: new Date() }   // ⭐ only active sessions
+});
 
     if (!users.length) {
       return res.status(404).json({
