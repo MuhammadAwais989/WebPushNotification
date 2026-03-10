@@ -6,9 +6,6 @@ const subscriptionSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  },
-  expiresAt: { // NEW FIELD
-    type: Date
   }
 });
 

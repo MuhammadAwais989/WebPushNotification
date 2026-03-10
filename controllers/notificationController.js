@@ -11,11 +11,9 @@ export const sendNotification = async (req, res) => {
 
     const notificationId = uuidv4();
 
-    // Sirf ye line change karni hai sendNotification function ke andar:
-const users = await Subscription.find({
-  browserId: { $in: browserIds },
-  expiresAt: { $gt: new Date() } // CONDITION: Sirf wo jinka session active hai
-});
+    const users = await Subscription.find({
+      browserId: { $in: browserIds }
+    });
 
     if (!users.length) {
       return res.status(404).json({
