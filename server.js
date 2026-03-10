@@ -12,7 +12,12 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors(
+    {
+        origin: "https://web-push-notification-frontend.vercel.app/",
+        credentials: true
+    }
+));
 app.use(express.json());
 
 DBConnect();
